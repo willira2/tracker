@@ -22,7 +22,7 @@
       	'vomiting' => 'vomiting', 
       	'diarrhea' => 'diarrhea'])
 
-		@open(['route' => 'new_entry', 'method' => 'POST', 'id' => 'symptom-form'])
+		@open(['route' => 'symptom.new_entry', 'method' => 'POST', 'id' => 'symptom-form'])
 			@csrf
 		    @date('log_date')
 		    @checkboxes('names[]', 'Symptoms', $options, null, ['switch' => true])

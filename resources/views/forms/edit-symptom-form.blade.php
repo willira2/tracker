@@ -1,6 +1,3 @@
-@extends('layout.mainlayout')
-
-@section('content')
 <div class="container mt-4">
   @if(session('status'))
     <div class="alert alert-success">
@@ -29,4 +26,3 @@
 </div>    
 </body>
 </html>
-@endsection

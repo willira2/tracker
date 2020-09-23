@@ -11,10 +11,25 @@ use Illuminate\Support\Facades\Auth;
 
 class SymptomController extends Controller {
 
+    /**
+     * return current user's saved symptoms
+     */
+    public function index()
+    {
+        $user_id = Auth::user()->id;
+        $entries = Entry::join('symptoms', 'entrys.id', '=', 'symptoms.entry_id')
+            ->select('*')
+            ->where('entrys.user_id', '=', $user_id)
+            ->groupBy('entrys.log_date', 'symptoms.name')
+            ->get();
+
+        return view('tracker', ['entries' => $entries]);
+    }
+
     /*
     * return current user's entries and associated symptoms for the current week, starting from Sunday
     */
-    public function index()
+    public function reports()
     {
         if (date('D' == 'Sun')) {
         	$start_date = date('Y-m-d');
@@ -51,39 +66,13 @@ class SymptomController extends Controller {
         return view('reports.reports', ['entries' => $formatted_entries]);
     }
 
-    public function create()
-    {
-    	if (date('D' == 'Sun')) {
-        	$start_date = date('Y-m-d');
-        } else {
-        	$start_date = date('Y-m-d',strtotime('last sunday'));
-        }
-
-        $end_date = date('Y-m-d', strtotime($start_date.'+7 days'));
-
-        $user_id = Auth::user()->id;
-        $entries = Entry::join('symptoms', 'entrys.id', '=', 'symptoms.entry_id')
-            ->select('*')
-            ->where('entrys.user_id', '=', $user_id)
-            ->whereBetween('entrys.log_date', [$start_date, $end_date])
-            ->groupBy('entrys.log_date', 'symptoms.name')
-            ->get();
-
-        return view('tracker', ['entries' => $entries]);
-    }
-
-    public function show()
-    {
-        return view('symptom-form');
-    }
-
+    /**
+     * create a symptom entry for the current user with forms/symptom-form request data
+     * set `symptom.severity` to null (for now)
+     @param Request $request
+     */
     public function store(Request $request)
     {
-    	// $data = $request->validate([
-     //        'name' => 'required|max:255',
-     //        'severity' => 'required'
-     //    ]);
-
        	$input = $request->all();
 
         $user_id = Auth::user()->id;
@@ -95,7 +84,7 @@ class SymptomController extends Controller {
 
 		if (isset($input['names'])) {
 			foreach ($input['names'] as $symptom) {
-				$symptom = new Symptom(['name' => $symptom, 'user_id' => $user_id, 'severity' => 1, 'created_at' => date("Y-m-d H:i:s")]);
+				$symptom = new Symptom(['name' => $symptom, 'user_id' => $user_id, 'severity' => null, 'created_at' => date("Y-m-d H:i:s")]);
 				$entry->symptoms()->save($symptom); 
 			}
 		}
@@ -103,6 +92,10 @@ class SymptomController extends Controller {
 		return redirect('/')->with('status', 'Symptom Data Has Been inserted');
     }
 
+    /**
+     * return symptom record given by id
+     @param $id
+     */
     public function edit($id)
     {
     	$user_id = Auth::user()->id;
@@ -114,27 +107,25 @@ class SymptomController extends Controller {
         return view('edit-symptom-form',compact(['symptom']));
     }
 
+    /**
+     * update a symptom entry given by id with forms/edit-symptom-form request data
+     @param Request $request, $id
+     */
      public function update(Request $request, $id)
     {
-        // $request->validate([
-        //  'name' => 'required',
-        //  'email' => 'required|email',
-        //  'phone' => 'required'
-        // ]);
-
         $user_id = Auth::user()->id;
-
         Symptom::where('id', $id)->update($request->all());
-        // return redirect()->back()->with('success','Update Successfully');
-        return view('dashboard');
+        return redirect()->back()->with('success','Update Successfully');
     }
 
+    /**
+     * delete a symptom given by its id
+     */
     public function destroy($id)
     {
         Symptom::where('id', $id)->delete();
         return redirect()->back()->with('success','Delete Successful');
     }
-
-
+    
 }
 ?>

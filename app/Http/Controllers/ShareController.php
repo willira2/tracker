@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\Crypt;
 class ShareController extends Controller
 {
     /**
-     * return current user's entries and associated symptoms for the current week, starting from Sunday
+     * return current user's shares
      */
     public function index() {
     	$user_id = Auth::user()->id;
@@ -23,6 +22,9 @@ class ShareController extends Controller
     	return view('shares.index', ['shares' => $user_shares]);
     }
 
+    /**
+     * create a share entry for the current user with a cryptographically secure random value as the access_string
+     */
     public function store() {
 		$user_id = Auth::user()->id;
 		$access_string = bin2hex(openssl_random_pseudo_bytes(40));
@@ -35,16 +37,22 @@ class ShareController extends Controller
 		return redirect('/shares')->with('status', 'New Share Link Has Been Created');
     }
 
+    /**
+     * delete a share given by its id
+     */
     public function destroy($id)
     {
         Share::where('id', $id)->delete();
         return redirect()->back();
     }
 
+    /**
+     * find and return a user's formatted array of symptoms by using the given $token to identify the user.
+     * no user data is to be passed to the view which should not contain any personally identifiable information.
+     @param $token
+     */
     public function view(Request $request, $token) {
     	$share = Share::where('access_string', $token)->first();
-
-    	// echo $share['user_id']; exit;
 
     	if (date('D' == 'Sun')) {
         	$start_date = date('Y-m-d');

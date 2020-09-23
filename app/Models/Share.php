@@ -18,7 +18,7 @@ class Share extends Model
     /**
      * Get the share that belongs to the user
      */
-    public function symptom()
+    public function share()
     {
         return $this->belongsTo('App\Models\User');
     }
