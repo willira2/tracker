@@ -7,7 +7,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-The Laravel [documentation] (https://laravel.com/docs/8.x) does a great job summarizing what you need to get started with a Laravel project. There are no special prerequisites other than those listed at the link. 
+The Laravel [documentation](https://laravel.com/docs/8.x) does a great job summarizing what you need to get started with a Laravel project. There are no special prerequisites other than those listed at the link. 
 
 ### Installing
 
