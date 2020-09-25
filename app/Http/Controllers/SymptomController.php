@@ -8,60 +8,55 @@ use App\Models\Entry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 
 class SymptomController extends Controller {
 
     /**
-     * return current user's saved symptoms
+     * return current user's saved symptoms paginated by latest entry
      */
     public function index()
     {
         $user_id = Auth::user()->id;
         $entries = Entry::join('symptoms', 'entrys.id', '=', 'symptoms.entry_id')
-            ->select('*')
+            ->select(['entrys.log_date', 'symptoms.name', 'symptoms.id'])
             ->where('entrys.user_id', '=', $user_id)
-            ->groupBy('entrys.log_date', 'symptoms.name')
-            ->get();
+            ->orderBy('entrys.log_date', 'DESC')
+            ->paginate(5);
 
         return view('tracker', ['entries' => $entries]);
     }
 
     /*
-    * return current user's entries and associated symptoms for the current week, starting from Sunday
+    * return current user's entries and associated symptoms for the requested week, starting from Sunday
     */
-    public function reports()
+    public function reports(Request $request)
     {
-        if (date('D' == 'Sun')) {
-        	$start_date = date('Y-m-d');
-        } else {
-        	$start_date = date('Y-m-d',strtotime('last sunday'));
-        }
+        if (!$request->filled('dir') && !$request->filled('start')) { // get current week if not date is specified
+            if (date('D') == 'Sun') {
+                $start_date = date('Y-m-d');
+            } else {
+                $start_date = date('Y-m-d', strtotime('last sunday'));
+            }
+        } else { // otherwise calculate starting date for requested date and direction
+            $request_day_of_week = date("w", strtotime($request->query('start')));
+            if ($request_day_of_week == 0) {
+                $start_date = $request->query('start');
+            } else {
+                $start_date = date('Y-m-d', strtotime('last sunday', strtotime($request->query('start'))));
+            }
 
+            if (strtolower($request->query('dir')) == 'prev') {
+                $start_date = date('Y-m-d', strtotime('last sunday', strtotime($start_date)));
+            } else {
+                $start_date = date('Y-m-d', strtotime('next sunday', strtotime($start_date)));
+            }
+        }
+  
         $end_date = date('Y-m-d', strtotime($start_date.'+7 days'));
-
         $user_id = Auth::user()->id;
-        $entries = Entry::join('symptoms', 'entrys.id', '=', 'symptoms.entry_id')
-            ->select('*')
-            ->where('entrys.user_id', '=', $user_id)
-            ->whereBetween('entrys.log_date', [$start_date, $end_date])
-            ->groupBy('entrys.log_date', 'symptoms.name')
-            ->get();
-
-        $current_date = $start_date;
-        $last_date = $end_date;
-        $formatted_entries = [];
-
-        while($current_date<$last_date) {
-        	$formatted_entries[] = ['date'=>$current_date];
-        	$current_date = date('Y-m-d', strtotime('+1 day', strtotime($current_date)));
-        }
-
-        foreach ($entries as $entry) {
-        	$key = array_search($entry->log_date, array_column($formatted_entries, 'date'));
-        	if ($key !== false) {
-        		$formatted_entries[$key]['symptoms'][] = $entry->name; 
-        	}
-        }
+        
+        $formatted_entries = Entry::weekly_entries($user_id, $start_date, $end_date);
 
         return view('reports.reports', ['entries' => $formatted_entries]);
     }
@@ -93,32 +88,6 @@ class SymptomController extends Controller {
     }
 
     /**
-     * return symptom record given by id
-     @param $id
-     */
-    public function edit($id)
-    {
-    	$user_id = Auth::user()->id;
-    	$symptom = Symptom::where([
-		    ['id', $id],
-		    ['user_id', $user_id],
-		])->first();
-
-        return view('edit-symptom-form',compact(['symptom']));
-    }
-
-    /**
-     * update a symptom entry given by id with forms/edit-symptom-form request data
-     @param Request $request, $id
-     */
-     public function update(Request $request, $id)
-    {
-        $user_id = Auth::user()->id;
-        Symptom::where('id', $id)->update($request->all());
-        return redirect()->back()->with('success','Update Successfully');
-    }
-
-    /**
      * delete a symptom given by its id
      */
     public function destroy($id)
@@ -126,6 +95,6 @@ class SymptomController extends Controller {
         Symptom::where('id', $id)->delete();
         return redirect()->back()->with('success','Delete Successful');
     }
-    
+
 }
 ?>

@@ -26,8 +26,9 @@
 	                    </td>
 	                </tr>
 	            @endforeach
-	        </tbody>
+	        </tbody>       
 	    </table>
+	    {{ $entries->withQueryString()->links() }}
 	</div>
 </div>
 @endsection

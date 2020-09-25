@@ -15,7 +15,8 @@ class ShareController extends Controller
     /**
      * return current user's shares
      */
-    public function index() {
+    public function index() 
+    {
     	$user_id = Auth::user()->id;
     	$user_shares = Share::where('user_id', $user_id)->get();
 
@@ -25,7 +26,8 @@ class ShareController extends Controller
     /**
      * create a share entry for the current user with a cryptographically secure random value as the access_string
      */
-    public function store() {
+    public function store() 
+    {
 		$user_id = Auth::user()->id;
 		$access_string = bin2hex(openssl_random_pseudo_bytes(40));
 
@@ -51,40 +53,35 @@ class ShareController extends Controller
      * no user data is to be passed to the view which should not contain any personally identifiable information.
      @param $token
      */
-    public function view(Request $request, $token) {
+    public function view(Request $request, $token) 
+    {
     	$share = Share::where('access_string', $token)->first();
 
-    	if (date('D' == 'Sun')) {
-        	$start_date = date('Y-m-d');
-        } else {
-        	$start_date = date('Y-m-d',strtotime('last sunday'));
-        }
+    	if (!$request->has('dir') && !$request->has('start')) { // get current week if not date is specified
+            if (date('D') == 'Sun') {
+                $start_date = date('Y-m-d');
+            } else {
+                $start_date = date('Y-m-d', strtotime('last sunday'));
+            }
+        } else { // otherwise calculate starting date for requested date and direction
+            $request_day_of_week = date("w", strtotime($request->query('start')));
+            if ($request_day_of_week == 0) {
+                $start_date = $request->query('start');
+            } else {
+                $start_date = date('Y-m-d', strtotime('last sunday', strtotime($request->query('start'))));
+            }
 
+            if (strtolower($request->query('dir')) == 'prev') {
+                $start_date = date('Y-m-d', strtotime('last sunday', strtotime($start_date)));
+            } else {
+                $start_date = date('Y-m-d', strtotime('next sunday', strtotime($start_date)));
+            }
+        }
+  
         $end_date = date('Y-m-d', strtotime($start_date.'+7 days'));
 
-    	$entries = Entry::join('symptoms', 'entrys.id', '=', 'symptoms.entry_id')
-            ->select('*')
-            ->where('entrys.user_id', '=', $share['user_id'])
-            ->whereBetween('entrys.log_date', [$start_date, $end_date])
-            ->groupBy('entrys.log_date', 'symptoms.name')
-            ->get();
+        $formatted_entries = Entry::weekly_entries($share['user_id'], $start_date, $end_date);
 
-        $current_date = $start_date;
-        $last_date = $end_date;
-        $formatted_entries = [];
-
-        while($current_date<$last_date) {
-        	$formatted_entries[] = ['date'=>$current_date];
-        	$current_date = date('Y-m-d', strtotime('+1 day', strtotime($current_date)));
-        }
-
-        foreach ($entries as $entry) {
-        	$key = array_search($entry->log_date, array_column($formatted_entries, 'date'));
-        	if ($key !== false) {
-        		$formatted_entries[$key]['symptoms'][] = $entry->name; 
-        	}
-        }
-
-    	return view('shares.view', ['entries' => $formatted_entries]);
+    	return view('shares.view', ['entries' => $formatted_entries, 'access_string' => $token]);
     }
 }

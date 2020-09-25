@@ -25,8 +25,6 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
 Route::middleware(['auth:sanctum', 'verified'])->get('/', [SymptomController::class, 'index'])->name('tracker');
 Route::middleware(['auth:sanctum', 'verified'])->get('/reports', [SymptomController::class, 'reports'])->name('symptom.reports');
 Route::middleware(['auth:sanctum', 'verified'])->post('/store', [SymptomController::class, 'store'])->name('symptom.new_entry');
-Route::middleware(['auth:sanctum', 'verified'])->get('/edit/{id}', [SymptomController::class, 'edit'])->name('symptom.edit');
-Route::middleware(['auth:sanctum', 'verified'])->post('/update/$id}', [SymptomController::class, 'update'])->name('symptom.update');
 Route::middleware(['auth:sanctum', 'verified'])->post('/destroy/{id}', [SymptomController::class, 'destroy'])->name('symptom.destroy');
 
 /*
