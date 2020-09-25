@@ -5,20 +5,25 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="/dashboard">
+                    <a href="/">
                         <x-jet-application-mark class="block h-9 w-auto" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-jet-nav-link href="/dashboard" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                    <x-jet-nav-link href="/" :active="request()->routeIs('tracker')">
+                        {{ __('Tracker') }}
+                    </x-jet-nav-link>
+                </div>
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <x-jet-nav-link href="/reports" :active="request()->routeIs('manage_shares')">
+                        {{ __('Reports') }}
                     </x-jet-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-jet-nav-link href="/shares" :active="request()->routeIs('manage_shares')">
-                        {{ __('Manage Shares') }}
+                        {{ __('Shares') }}
                     </x-jet-nav-link>
                 </div>
             </div>
@@ -73,8 +78,8 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-jet-responsive-nav-link href="/dashboard" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+            <x-jet-responsive-nav-link href="/" :active="request()->routeIs('tracker')">
+                {{ __('Tracker') }}
             </x-jet-responsive-nav-link>
         </div>
 
@@ -92,16 +97,22 @@
             </div>
 
             <div class="mt-3 space-y-1">
+                <!-- Home -->
+                <x-jet-responsive-nav-link href="/" :active="request()->routeIs('tracker')">
+                    {{ __('Tracker') }}
+                </x-jet-responsive-nav-link>
+                <!-- Reports -->
+                <x-jet-responsive-nav-link href="/reports" :active="request()->routeIs('symptom.reports')">
+                    {{ __('Reports') }}
+                </x-jet-responsive-nav-link>
+                <!-- Shares -->
+                <x-jet-responsive-nav-link href="/shares" :active="request()->routeIs('share.index')">
+                    {{ __('Shares') }}
+                </x-jet-responsive-nav-link>
                 <!-- Account Management -->
                 <x-jet-responsive-nav-link href="/user/profile" :active="request()->routeIs('profile.show')">
-                    {{ __('Profile') }}
+                    {{ __('Manage Account') }}
                 </x-jet-responsive-nav-link>
-
-                @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                    <x-jet-responsive-nav-link href="/user/api-tokens" :active="request()->routeIs('api-tokens.index')">
-                        {{ __('API Tokens') }}
-                    </x-jet-responsive-nav-link>
-                @endif
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
